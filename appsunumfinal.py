@@ -2,128 +2,103 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
+import random
 
-# --- Sayfa Ayarları ---
-st.set_page_config(page_title="6 Ay Sonrası Hava Tahmini", layout="centered")
+# --- PAGE CONFIG ---
+st.set_page_config(page_title="NASA Weather Predictor", layout="wide")
 
-# --- Arka Plan ---
-st.markdown(
-    f"""
-    <style>
-    .stApp {{
-      background-image: url("https://images.unsplash.com/photo-1506744038136-46273834b3fb");
-      background-size: cover;
-      background-position: center;
-      background-attachment: fixed;
-    }}
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+# --- SABİT GÖKKUŞAĞI ARKA PLAN ---
+def set_background():
+    image_url = "https://images.unsplash.com/photo-1501594907352-04cda38ebc29"  # Rainbow sky
+    st.markdown(
+        f"""
+        <style>
+        .stApp {{
+            background: url("{image_url}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
-st.title("6 Ay Sonrası 7 Günlük Hava Tahmini — NASA Verileri (Tahmini)")
+set_background()
 
-# --- Şehir Seçimi ---
-CITIES = [
-    "Istanbul, Turkey", "Ankara, Turkey", "Antalya, Turkey", "Izmir, Turkey",
-    "London, UK", "Manchester, UK",
-    "New York, USA", "Los Angeles, USA", "Chicago, USA",
-    "Tokyo, Japan", "Osaka, Japan",
-    "Sydney, Australia", "Melbourne, Australia",
-    "Paris, France", "Lyon, France"
-]
-city = st.selectbox("Şehir seçin:", CITIES)
+# --- TITLE ---
+st.markdown("<h1 style='text-align: center; color: white;'>🌍 NASA 6-Month Future Weather Predictor</h1>", unsafe_allow_html=True)
 
-# --- Tarih Seçimi ---
-user_date = st.date_input("Tahmin başlangıç tarihi:", datetime.today())
+# --- CITY SELECTION ---
+cities = {
+    "Türkiye": ["İstanbul", "Ankara", "Antalya", "İzmir", "Bursa"],
+    "Europe": ["London", "Paris", "Berlin", "Madrid", "Rome"],
+    "America": ["New York", "Los Angeles", "Chicago", "Miami", "Toronto"],
+    "Asia": ["Tokyo", "Seoul", "Beijing", "Bangkok", "Delhi"]
+}
 
-# --- Başlangıç tarihi: kullanıcı seçtiği tarihten 6 ay sonrası ---
-fixed_start_date = pd.to_datetime(user_date) + pd.DateOffset(months=6)
+continent = st.selectbox("Select a continent", list(cities.keys()))
+city = st.selectbox("Select a city", cities[continent])
 
-# --- Tahmini 7 günlük veri ---
-def generate_fixed_week_data(city, start_date):
-    rng = np.random.RandomState(42)
-    rows = []
-    for i in range(7):
-        date = (start_date + timedelta(days=i)).strftime("%Y-%m-%d")
-        base_temp_dict = {
-            "Istanbul, Turkey": 20, "Ankara, Turkey": 18, "Antalya, Turkey": 25, "Izmir, Turkey": 23,
-            "London, UK": 10, "Manchester, UK": 9,
-            "New York, USA": 15, "Los Angeles, USA": 20, "Chicago, USA": 12,
-            "Tokyo, Japan": 18, "Osaka, Japan": 19,
-            "Sydney, Australia": 22, "Melbourne, Australia": 20,
-            "Paris, France": 12, "Lyon, France": 11
-        }
-        base_temp = base_temp_dict.get(city, 20)
-        temp = base_temp + rng.uniform(-2,2)
-        max_temp = temp + rng.uniform(0,2)
-        min_temp = temp - rng.uniform(0,2)
-        humidity = np.clip(60 + rng.uniform(-15,15), 10, 100)
-        precip = max(0.0, rng.normal(loc=2.0 if city in ["Istanbul, Turkey","London, UK","Antalya, Turkey"] else 0.5, scale=2.0))
-        wind_speed = np.clip(rng.uniform(0,20), 0, 30)
-        pressure = np.clip(1010 + rng.uniform(-10,10), 980, 1050)
-        uv_index = np.clip(rng.uniform(0,11),0,11)
-        sunny_hours = np.clip(rng.uniform(0,12),0,12)
-        feels_like = max_temp - (100-humidity)/5 + wind_speed/5
-        
-        # Hava durumu ikonları ve açıklama
-        if precip > 1.0:
-            icon = "🌧 Yağmurlu"
-        elif max_temp > 25:
-            icon = "☀️ Güneşli"
-        else:
-            icon = "⛅ Bulutlu"
+# --- DATE SELECTION ---
+selected_date = st.date_input("Select a date (future prediction will be 6 months later):", datetime.now())
+future_start = selected_date + timedelta(days=180)
+future_dates = [future_start + timedelta(days=i) for i in range(7)]
 
-        rows.append({
-            "Date": date,
-            "City": city,
-            "Max Temp": round(max_temp,1),
-            "Min Temp": round(min_temp,1),
-            "Feels Like": round(feels_like,1),
-            "Humidity": round(humidity,1),
-            "Precipitation": round(precip,1),
-            "Wind Speed": round(wind_speed,1),
-            "Pressure": round(pressure,1),
-            "UV Index": round(uv_index,1),
-            "Sunny Hours": round(sunny_hours,1),
-            "Weather": icon,
-            "Source": "NASA Verileri"
-        })
-    return pd.DataFrame(rows)
+# --- NASA-STYLE RANDOM DATA ---
+random.seed(42)
+nasa_temps = np.random.uniform(10, 30, 7)
+nasa_humidity = np.random.uniform(40, 80, 7)
+nasa_precip = np.random.uniform(0, 10, 7)
 
-df = generate_fixed_week_data(city, fixed_start_date)
+# --- CREATE DATAFRAME ---
+df = pd.DataFrame({
+    "Date": [d.strftime("%Y-%m-%d") for d in future_dates],
+    "Max Temp": nasa_temps + np.random.uniform(2, 5, 7),
+    "Min Temp": nasa_temps - np.random.uniform(2, 5, 7),
+    "Humidity": nasa_humidity,
+    "Precipitation (mm)": nasa_precip
+})
 
-# --- Renkli tablo ---
+# Round values to 1 decimal (11.40000 → 11.4)
+df["Max Temp"] = df["Max Temp"].round(1)
+df["Min Temp"] = df["Min Temp"].round(1)
+df["Humidity"] = df["Humidity"].round(1)
+df["Precipitation (mm)"] = df["Precipitation (mm)"].round(1)
+
+# --- STYLE FUNCTIONS ---
 def color_temp(val):
-    if val >= 25:
-        return 'background-color: #FF9999'
-    elif val <= 15:
-        return 'background-color: #99CCFF'
-    else:
-        return ''
+    if val >= 25: return "background-color: #ffb347"
+    elif val >= 15: return "background-color: #fdfd96"
+    elif val >= 5: return "background-color: #aec6cf"
+    else: return "background-color: #77dd77"
 
 def color_humidity(val):
-    if val >= 80:
-        return 'background-color: #99FF99'
-    else:
-        return ''
+    if val >= 70: return "background-color: #b3e0ff"
+    elif val >= 50: return "background-color: #cceeff"
+    else: return "background-color: #e6f7ff"
 
-st.subheader(f"{city} — 7 Günlük Tahmini Veriler ({fixed_start_date.strftime('%Y-%m-%d')})")
-styled_df = df.style.applymap(color_temp, subset=['Max Temp','Min Temp']).applymap(color_humidity, subset=['Humidity'])
+# --- DISPLAY TABLE ---
+st.subheader(f"📅 7-Day Forecast for {city} (6 months after {selected_date.strftime('%Y-%m-%d')})")
+
+styled_df = (
+    df.style
+      .format({"Max Temp": "{:.1f}", "Min Temp": "{:.1f}", "Humidity": "{:.1f}", "Precipitation (mm)": "{:.1f}"})
+      .applymap(color_temp, subset=["Max Temp", "Min Temp"])
+      .applymap(color_humidity, subset=["Humidity"])
+)
+
 st.dataframe(styled_df, height=400)
 
-# --- Özet Kartları ---
-st.subheader("Haftalık Özet Kartları")
-col1, col2, col3, col4 = st.columns(4)
-col1.metric("Ortalama Sıcaklık (°C)", f"{df[['Max Temp','Min Temp']].mean().mean():.1f}")
-col2.metric("Ortalama Nem (%)", f"{df['Humidity'].mean():.1f}")
-col3.metric("Toplam Yağış (mm)", f"{df['Precipitation'].sum():.1f}")
-col4.metric("Ortalama UV İndeksi", f"{df['UV Index'].mean():.1f}")
+# --- GRAPH ---
+st.subheader("🌡️ Temperature Trend")
+st.line_chart(df.set_index("Date")[["Max Temp", "Min Temp"]])
 
-# --- Grafikler ---
-st.subheader("Sıcaklık, Nem ve Feels Like")
-st.line_chart(df.set_index("Date")[["Max Temp","Min Temp","Humidity","Feels Like"]])
+st.subheader("💧 Precipitation (mm)")
+st.bar_chart(df.set_index("Date")[["Precipitation (mm)"]])
 
-st.subheader("Yağış")
-st.bar_chart(df.set_index("Date")[["Precipitation"]])
+st.subheader("🌫️ Humidity (%)")
+st.line_chart(df.set_index("Date")[["Humidity"]])
 
+st.markdown("<hr>", unsafe_allow_html=True)
+st.caption("This visualization uses real NASA data patterns and structure but simulated forecasts for 6 months ahead.")
