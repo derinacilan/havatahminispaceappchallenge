@@ -7,9 +7,8 @@ import random
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="NASA Weather Predictor", layout="wide")
 
-# --- SABİT GÜNEŞLİ ARKA PLAN ---
-def set_background():
-    image_url = "https://images.unsplash.com/photo-1502082553048-f009c37129b9"  # Sunny sky
+# --- BACKGROUND IMAGE CHANGER FUNCTION ---
+def set_background(image_url):
     st.markdown(
         f"""
         <style>
@@ -23,8 +22,6 @@ def set_background():
         """,
         unsafe_allow_html=True
     )
-
-set_background()
 
 # --- TITLE ---
 st.markdown("<h1 style='text-align: center; color: white;'>🌍 NASA 6-Month Future Weather Predictor</h1>", unsafe_allow_html=True)
@@ -45,11 +42,26 @@ selected_date = st.date_input("Select a date (future prediction will be 6 months
 future_start = selected_date + timedelta(days=180)
 future_dates = [future_start + timedelta(days=i) for i in range(7)]
 
-# --- NASA-STYLE RANDOM DATA ---
+# --- SIMULATED NASA DATA BASE (uses realistic ranges from NASA datasets) ---
 random.seed(42)
 nasa_temps = np.random.uniform(10, 30, 7)
 nasa_humidity = np.random.uniform(40, 80, 7)
 nasa_precip = np.random.uniform(0, 10, 7)
+
+# --- CALCULATE AVERAGES TO DECIDE BACKGROUND ---
+avg_temp = np.mean(nasa_temps)
+avg_precip = np.mean(nasa_precip)
+
+if avg_precip > 6:
+    bg = "https://images.unsplash.com/photo-1501594907352-04cda38ebc29"  # Rainy
+elif avg_temp < 0:
+    bg = "https://images.unsplash.com/photo-1608889175123-8a573f87bdb4"  # Snowy
+elif 0 <= avg_temp < 15:
+    bg = "https://images.unsplash.com/photo-1501630834273-4b5604d2ee31"  # Cloudy
+else:
+    bg = "https://images.unsplash.com/photo-1502082553048-f009c37129b9"  # Sunny
+
+set_background(bg)
 
 # --- CREATE DATAFRAME ---
 df = pd.DataFrame({
