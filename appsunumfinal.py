@@ -7,21 +7,23 @@ from datetime import datetime, timedelta
 st.set_page_config(page_title="6 Ay Sonrası Hava Tahmini", layout="centered")
 
 # --- Arka Plan ---
-page_bg_img = """
-<style>
-body {
-background-image: url("https://images.unsplash.com/photo-1506744038136-46273834b3fb");
-background-size: cover;
-background-repeat: no-repeat;
-background-attachment: fixed;
-}
-</style>
-"""
-st.markdown(page_bg_img, unsafe_allow_html=True)
+st.markdown(
+    f"""
+    <style>
+    .stApp {{
+      background-image: url("https://images.unsplash.com/photo-1506744038136-46273834b3fb");
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 st.title("6 Ay Sonrası 7 Günlük Hava Tahmini — NASA Verileri (Tahmini)")
 
-# --- Şehir Seçimi (Farklı ülkeler ve Türkiye’den şehirler) ---
+# --- Şehir Seçimi ---
 CITIES = [
     "Istanbul, Turkey", "Ankara, Turkey", "Antalya, Turkey", "Izmir, Turkey",
     "London, UK", "Manchester, UK",
@@ -38,14 +40,12 @@ user_date = st.date_input("Tahmin başlangıç tarihi:", datetime.today())
 # --- Başlangıç tarihi: kullanıcı seçtiği tarihten 6 ay sonrası ---
 fixed_start_date = pd.to_datetime(user_date) + pd.DateOffset(months=6)
 
-# --- Tahmini 7 günlük veri üretimi ---
+# --- Tahmini 7 günlük veri ---
 def generate_fixed_week_data(city, start_date):
     rng = np.random.RandomState(42)
     rows = []
     for i in range(7):
         date = (start_date + timedelta(days=i)).strftime("%Y-%m-%d")
-        
-        # Baz sıcaklıklar şehir bazlı
         base_temp_dict = {
             "Istanbul, Turkey": 20, "Ankara, Turkey": 18, "Antalya, Turkey": 25, "Izmir, Turkey": 23,
             "London, UK": 10, "Manchester, UK": 9,
@@ -126,5 +126,4 @@ st.line_chart(df.set_index("Date")[["Max Temp","Min Temp","Humidity","Feels Like
 
 st.subheader("Yağış")
 st.bar_chart(df.set_index("Date")[["Precipitation"]])
-
 
