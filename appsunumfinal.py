@@ -7,9 +7,9 @@ import random
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="NASA Weather Predictor", layout="wide")
 
-# --- SABİT GÖKKUŞAĞI ARKA PLAN ---
+# --- SABİT GÜNEŞLİ ARKA PLAN ---
 def set_background():
-    image_url = "https://images.unsplash.com/photo-1501594907352-04cda38ebc29"  # Rainbow sky
+    image_url = "https://images.unsplash.com/photo-1502082553048-f009c37129b9"  # Sunny sky
     st.markdown(
         f"""
         <style>
@@ -60,7 +60,7 @@ df = pd.DataFrame({
     "Precipitation (mm)": nasa_precip
 })
 
-# Round values to 1 decimal (11.40000 → 11.4)
+# Round values to 1 decimal everywhere
 df["Max Temp"] = df["Max Temp"].round(1)
 df["Min Temp"] = df["Min Temp"].round(1)
 df["Humidity"] = df["Humidity"].round(1)
@@ -83,7 +83,7 @@ st.subheader(f"📅 7-Day Forecast for {city} (6 months after {selected_date.str
 
 styled_df = (
     df.style
-      .format({"Max Temp": "{:.1f}", "Min Temp": "{:.1f}", "Humidity": "{:.1f}", "Precipitation (mm)": "{:.1f}"})
+      .format({"Max Temp": "{:.1f}", "Min Temp": "{:.1f}"})
       .applymap(color_temp, subset=["Max Temp", "Min Temp"])
       .applymap(color_humidity, subset=["Humidity"])
 )
